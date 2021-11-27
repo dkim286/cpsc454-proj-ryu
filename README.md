@@ -83,7 +83,7 @@ $ ./topology.py
 
 ### Step 3: Demonstrate the ICMP flood trigger 
 
-At this point, you can open up a browser to http://localhost:8080/home/topology.html to show the current topology. 
+At this point, *if you have Flowmanager installed and running with the controller*, you can open up a browser to http://localhost:8080/home/topology.html to show the current topology. 
 You may have to perform `pingall` in **topology terminal** for the nodes to show up. 
 
 In **topology terminal**, start the flood attack: 
