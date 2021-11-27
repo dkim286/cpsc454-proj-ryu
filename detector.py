@@ -16,8 +16,8 @@ class ICMP_Tracker:
 
     def icmp_sent(self, src):
         '''
-        Call this function only when ipv4_src sends an ICMP packet.
-        This function DOES NOT do ICMP detection on its own.
+        Call this function only when `src` sends an ICMP packet.
+        This function DOES NOT perform ICMP detection on its own.
 
         Params:
             src (str): MAC address of the source of ICMP package (ping).
