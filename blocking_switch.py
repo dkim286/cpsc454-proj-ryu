@@ -8,7 +8,7 @@ from ryu.lib.packet import packet, ipv4, in_proto, ether_types, icmp, ethernet
 
 import array
 from simple_switch_13 import SimpleSwitch13
-from detector import ICMP_Tracker
+from icmp_detector import ICMP_Detector
 import time
 
 # table 0 -> table 5 -> table 10
@@ -19,7 +19,7 @@ FORWARD_TABLE = 10
 class BlockingSwitch(SimpleSwitch13):
     def __init__(self, *args, **kwargs):
         super(BlockingSwitch, self).__init__(*args, **kwargs)
-        self._tracker = ICMP_Tracker()
+        self._tracker = ICMP_Detector()
         self._icmp_brake_timestamp = 0
 
 
@@ -58,8 +58,10 @@ class BlockingSwitch(SimpleSwitch13):
             # Ping detected, somebody's flooding, and icmp blocking rule probably
             # expired by now.
             if is_flood and time_since_last_block > 10:
-                print('flood detected, blocking all ICMP traffic...')
-                self.apply_filter_table_rules(datapath)
+                print('flood detected from ',
+                      src,
+                      ' - blocking all ICMP traffic from that host temporarily...')
+                self.apply_filter_table_rules(datapath, src)
                 self._icmp_brake_timestamp = time.time()
 
 
@@ -96,7 +98,7 @@ class BlockingSwitch(SimpleSwitch13):
         datapath.send_msg(mod)
 
 
-    def apply_filter_table_rules(self, datapath):
+    def apply_filter_table_rules(self, datapath, src_mac):
         '''
         Apply "drop all ICMP" rule to FORWRAD_TABLE
 
@@ -111,7 +113,8 @@ class BlockingSwitch(SimpleSwitch13):
 
         # Create a rule matching all ICMP packets.
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                ip_proto=in_proto.IPPROTO_ICMP)
+                                ip_proto=in_proto.IPPROTO_ICMP,
+                                eth_src=src_mac)
 
         # Use that rule to create a flowtable-modifying object
         # NOTE: in a FILTERING table, if a rule matches a packet, then the packet

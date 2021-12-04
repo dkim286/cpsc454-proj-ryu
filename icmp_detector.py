@@ -2,7 +2,7 @@
 import time
 import sys
 
-class ICMP_Tracker:
+class ICMP_Detector:
     '''
     Keeps track of the number of ICMP packets sent by each host. Tolerates only
     up to 100 pings/sec.
