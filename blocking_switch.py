@@ -15,12 +15,16 @@ import time
 FILTER_TABLE = 5
 FORWARD_TABLE = 10
 
+# ban offenders for 10 sec
+BAN_TIME = 10
+
 
 class BlockingSwitch(SimpleSwitch13):
     def __init__(self, *args, **kwargs):
         super(BlockingSwitch, self).__init__(*args, **kwargs)
         self._tracker = ICMP_Detector()
         self._icmp_brake_timestamp = 0
+        self._icmp_ban_timers = dict()
 
 
     @handler.set_ev_cls(ofp_event.EventOFPSwitchFeatures, handler.CONFIG_DISPATCHER)
@@ -52,17 +56,28 @@ class BlockingSwitch(SimpleSwitch13):
         dst = eth.dst
         src = eth.src
 
-        is_flood = self._tracker.icmp_sent(src)
-        time_since_last_block = time.time() - self._icmp_brake_timestamp
+        offenders = self._tracker.tally(src)
         if ping:
             # Ping detected, somebody's flooding, and icmp blocking rule probably
             # expired by now.
-            if is_flood and time_since_last_block > 10:
+            time_elapsed = self._time_since_last_ban(src)
+            if offenders != [] and time_elapsed > BAN_TIME:
+                # only punish the offender, not the replying victim
                 print('flood detected from ',
-                      src,
-                      ' - blocking all ICMP traffic from that host temporarily...')
+                    src,
+                    ' - blocking all ICMP traffic from that host temporarily...')
                 self.apply_filter_table_rules(datapath, src)
-                self._icmp_brake_timestamp = time.time()
+                self._icmp_ban_timers[src] = time.time()
+
+
+    def _time_since_last_ban(self, src):
+        '''
+        Calculate the time elapsed since src was banned last time.
+        '''
+        if src not in self._icmp_ban_timers.keys():
+            return BAN_TIME + 1
+        else:
+            return time.time() - self._icmp_ban_timers[src]
 
 
 
@@ -98,9 +113,9 @@ class BlockingSwitch(SimpleSwitch13):
         datapath.send_msg(mod)
 
 
-    def apply_filter_table_rules(self, datapath, src_mac):
+    def apply_filter_table_rules(self, datapath, src_mac='', duration=10):
         '''
-        Apply "drop all ICMP" rule to FORWRAD_TABLE
+        Apply "drop all ICMP from host" rule to FORWRAD_TABLE
 
         Params:
             datapath (ryu.controller.controller.Datapath): ???
@@ -111,17 +126,22 @@ class BlockingSwitch(SimpleSwitch13):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        # Create a rule matching all ICMP packets.
-        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                ip_proto=in_proto.IPPROTO_ICMP,
-                                eth_src=src_mac)
+        if src_mac != '':
+            # Create a rule matching all ICMP packets from src_mac.
+            match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+                                    ip_proto=in_proto.IPPROTO_ICMP,
+                                    eth_src=src_mac)
+        else:
+            # block ICMP packets globally
+            match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+                                    ip_proto=in_proto.IPPROTO_ICMP)
 
         # Use that rule to create a flowtable-modifying object
         # NOTE: in a FILTERING table, if a rule matches a packet, then the packet
         #       is dropped
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE,
                                 priority=10000, match=match,
-                                hard_timeout=10)
+                                hard_timeout=duration)
 
         # send that mod object to the switch
         datapath.send_msg(mod)
