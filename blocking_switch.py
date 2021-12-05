@@ -23,7 +23,6 @@ class BlockingSwitch(SimpleSwitch13):
     def __init__(self, *args, **kwargs):
         super(BlockingSwitch, self).__init__(*args, **kwargs)
         self._tracker = ICMP_Detector()
-        self._icmp_brake_timestamp = 0
         self._icmp_ban_timers = dict()
 
 
@@ -73,6 +72,14 @@ class BlockingSwitch(SimpleSwitch13):
     def _time_since_last_ban(self, src):
         '''
         Calculate the time elapsed since src was banned last time.
+
+        Params:
+            src(str): MAC address of the host to check for ban timer (01:23:...)
+
+        Returns:
+            (int): number of seconds since the last ban, or BAN_TIME+1 seconds if
+                   this host hasn't been banned before (e.g. assume that ban has
+                   "expred").
         '''
         if src not in self._icmp_ban_timers.keys():
             return BAN_TIME + 1
@@ -149,8 +156,8 @@ class BlockingSwitch(SimpleSwitch13):
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         '''
-        Whoever calls this function gets to add their rules (match) to the
-        flowtable.
+        Modify the forwardng table to apply <actions> to any packet that
+        satisfies <match> conditions.
         '''
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
