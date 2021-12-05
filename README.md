@@ -11,6 +11,7 @@
 - [Flowmanager](https://github.com/martimy/flowmanager) -- optional, if we want to show off the topology. 
 - [Ryu framework](https://github.com/faucetsdn/ryu) -- mandatory. This project depends on it.
 - Mininet -- mandatory. This project depends on it.
+- `hping` -- mandatory. Needed for demonstration. 
 
 ## Running 
 
@@ -63,7 +64,7 @@ $ ryu-manager blocking_switch.py
 
 In a separate terminal window, start the topology. 
 
-For convenience, this terminal window will be referred to as **topology terminal** in step 3.
+This terminal window will be referred to as **topology terminal** in step 3.
 
 #### Option 1: Use the `topology.sh` script 
 
@@ -75,7 +76,7 @@ $ ./topology.sh
 
 #### Option 2: Use the `topology.py` program 
 
-Simply run the program: 
+Simply, run the program: 
 
 ```
 $ ./topology.py
@@ -83,7 +84,7 @@ $ ./topology.py
 
 ### Step 3: Demonstrate the ICMP flood trigger 
 
-At this point, *if you have Flowmanager installed and running with the controller*, you can open up a browser to http://localhost:8080/home/topology.html to show the current topology. 
+At this point, *if you have Flowmanager installed and running with the controller*, you can point the browser at http://localhost:8080/home/topology.html to display a diagram of the current topology. 
 You may have to perform `pingall` in **topology terminal** for the nodes to show up. 
 
 In **topology terminal**, start the flood attack: 
@@ -94,9 +95,9 @@ mininet> h1 python3 flood.py h2
 
 This will cause `h1` to launch a ping flood attack on `h2`. 
 
-Observe the output in **controller terminal**. Once you see `flood detected, blocking all ICMP traffic...` message pop up, that means all ICMP traffic are *blocked* globally for 10 seconds. 
+Observe the output in **controller terminal**. Once the `flood detected, blocking all ICMP traffic...` message pops up, all ICMP traffic are *blocked* for the offending host for 10 seconds. This will also block the victim to prevent replies from flooding the network.
 
-In **topology terminal**, hit `ctrl+c` to stop the flood attack. Immediately, start a normal pinging process: 
+In **topology terminal**, hit `ctrl+c` to stop the flood attack. Then, start the normal pinging process immediately: 
 
 ```
 mininet> h1 ping h2 
