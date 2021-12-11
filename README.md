@@ -2,9 +2,13 @@
 
 ## Group members
 
-- Rachelle Chanthavong 
-- Danny Diep 
+- [Rachelle Chanthavong](https://github.com/rachpchan)
+- [Danny Diep](https://github.com/DannyDiep963)
 - Austin Kim 
+
+## Report
+
+The project report can be found under the `docs` folder. ([link](./docs/report.pdf))
 
 ## Prerequisites 
 
