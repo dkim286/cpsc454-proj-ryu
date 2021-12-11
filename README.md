@@ -10,6 +10,13 @@
 
 The project report can be found under the `docs` folder. ([link](./docs/report.pdf))
 
+Abstract: 
+
+> Conventional firewalls are used to implement network security standards at network borders. 
+> However, this can leave clients exposed to cyberattacks that originate within the network to which they are connected. 
+> One way to mitigate this issue is to use the flexibility of software-defined networking (SDN) to shape network traffic using a virtual firewall, enhancing network security across the board. 
+> In this project, we demonstrate a network-wide virtual firewall that uses the OpenFlow API to apply packet filtering across an entire virtual network in an automated manner.
+
 ## Prerequisites 
 
 - [Flowmanager](https://github.com/martimy/flowmanager) -- optional, if we want to show off the topology. 
